@@ -145,6 +145,12 @@ export class HodltreeFlashloanExchangeEventPool extends StatefulEventSubscriber<
    * @returns state of the event subsriber at blocknumber
    */
   async generateState(blockNumber: number): Promise<Readonly<PoolStateMap>> {
+    const requests = 5;
+    const bfOffset = 0;
+    const precOffset = 1;
+    const tOffset = 2;
+    const bOffset = 3;
+    const tmOffset = 4;
     let calldata = [];
     for (let pool of this.addressesSubscribed) {
       calldata.push({
@@ -176,22 +182,26 @@ export class HodltreeFlashloanExchangeEventPool extends StatefulEventSubscriber<
     let onChainState: PoolStateMap;
     let tmpPools = [];
     for (let poolId = 0; poolId < this.addressesSubscribed.length; poolId++) {
+      const tokens = resultData[poolId * requests + tOffset];
+      const balances = resultData[poolId * requests + bOffset];
+      const tokenMuls = resultData[poolId];
+
       const pool: PoolState = {
         poolAddress: this.addressesSubscribed[poolId],
-        borrowFee: BigInt(resultData[poolId * 4]),
-        PCT_PRECISION: BigInt(resultData[poolId * 4 + 1]),
+        borrowFee: BigInt(resultData[poolId * requests + bfOffset]),
+        PCT_PRECISION: BigInt(resultData[poolId * requests + precOffset]),
         tokenInfo: [],
         tokensToId: {},
+        TOKENS_MUL: [],
       };
 
-      const tokens = resultData[poolId * 4 + 2];
-      const balances = resultData[poolId * 4 + 3];
       for (let tokenId = 0; tokenId < tokens.length; tokenId++) {
         pool.tokenInfo.push({
           address: tokens[tokenId],
           tokenBalance: BigInt(balances[tokenId]),
         });
         pool.tokensToId[tokens[tokenId]] = tokenId;
+        pool.TOKENS_MUL[tokenId] = tokenMuls[tokenId];
       }
       onChainState[this.addressesSubscribed[poolId]] = pool;
       tmpPools.push(pool);
@@ -265,8 +275,8 @@ export class HodltreeFlashloanExchange
   getPools(from: Token, to: Token): PoolState[] {
     return this.eventPools.pools.filter(
       val =>
-        val.tokensToId[from.address.toLowerCase()] &&
-        val.tokensToId[to.address.toLowerCase()],
+        val.tokensToId[from.address.toLowerCase()] !== undefined &&
+        val.tokensToId[to.address.toLowerCase()] !== undefined,
     );
   }
 
@@ -291,14 +301,16 @@ export class HodltreeFlashloanExchange
       : poolsForTokens;
     if (!allowedPools.length) return null;
     let tokenOut = destToken.address.toLowerCase();
-    const poolPrices = poolsForTokens.map((pool: PoolState, poolId: number) => {
+    const poolPrices = poolsForTokens.map((pool: PoolState) => {
       const prices = amounts.map((value: bigint) => {
-        return this.getTokenPrice(pool.tokensToId[tokenOut], value, poolId);
+        return this.getTokenPrice(pool.tokensToId[tokenOut], value, pool);
       });
       return {
         prices,
-        unit: BigInt(0),
-        data: null,
+        unit: this.getTokenPrice(pool.tokensToId[tokenOut], BigInt(1), pool),
+        data: {
+          poolAddress: pool.poolAddress,
+        },
         poolIdentifier: `${this.dexKey}_${pool.poolAddress}`,
         exchange: this.dexKey,
         gasCost: 200 * 1000,
@@ -307,8 +319,11 @@ export class HodltreeFlashloanExchange
     return poolPrices as ExchangePrices<HodltreeFlashloanExchangeData>;
   }
 
-  getTokenPrice(destTokenId, amountIn: bigint, poolId): bigint {
-    const pool = this.eventPools.pools[poolId];
+  getTokenPrice(
+    destTokenId: number,
+    amountIn: bigint,
+    pool: PoolState,
+  ): bigint {
     let price = (pool.borrowFee + pool.PCT_PRECISION) / pool.PCT_PRECISION;
     let amountOut = amountIn * price;
     return pool.tokenInfo[destTokenId].tokenBalance >= amountOut ? price : null;
@@ -322,10 +337,31 @@ export class HodltreeFlashloanExchange
     destToken: string,
     srcAmount: string,
     destAmount: string,
-    data: any,
+    data: HodltreeFlashloanExchangeData,
     side: SwapSide,
   ): AdapterExchangeParam {
-    // TODO: complete me!
+    const payload = this.abiCoder.encodeParameter(
+      {
+        ParentStruct: {
+          liquidityPool_: 'address',
+          tokenIn_: 'address',
+          tokenOut_: 'address',
+          inAmount_: 'uint256',
+        },
+      },
+      {
+        liquidityPool_: data.poolAddress,
+        tokenIn_: srcToken,
+        tokenOut_: destToken,
+        inAmount_: srcAmount,
+      },
+    );
+
+    return {
+      targetExchange: this.exchangeAddress,
+      payload,
+      networkFee: '0',
+    };
   }
 
   // Encode call data used by simpleSwap like routers
@@ -337,19 +373,29 @@ export class HodltreeFlashloanExchange
     destToken: string,
     srcAmount: string,
     destAmount: string,
-    data: OptimizedHodltreeFlashloanExchangeData,
+    data: HodltreeFlashloanExchangeData,
     side: SwapSide,
   ): Promise<SimpleExchangeParam> {
-    // TODO: complete me!
-  }
+    const swapData = this.eventPools.exchangeInterface.encodeFunctionData(
+      'swap',
+      [
+        {
+          liquidityPool_: data.poolAddress,
+          tokenIn_: srcToken,
+          tokenOut_: destToken,
+          inAmount_: srcAmount,
+        },
+      ],
+    );
 
-  // This is called once before getTopPoolsForToken is
-  // called for multiple tokens. This can be helpful to
-  // update common state required for calculating
-  // getTopPoolsForToken. It is optional for a DEX
-  // to implement this
-  updatePoolState(): Promise<void> {
-    // TODO: complete me!
+    return this.buildSimpleParamWithoutWETHConversion(
+      srcToken,
+      srcAmount,
+      destToken,
+      destAmount,
+      swapData,
+      this.exchangeAddress,
+    );
   }
 
   // Returns list of top pools based on liquidity. Max
@@ -358,6 +404,34 @@ export class HodltreeFlashloanExchange
     tokenAddress: Address,
     limit: number,
   ): Promise<PoolLiquidity[]> {
-    //TODO: complete me!
+    const availablePools = this.eventPools.pools.filter(
+      val => val.tokensToId[tokenAddress.toLowerCase()] !== undefined,
+    );
+
+    const sortedPools = availablePools.sort(
+      (p1, p2) =>
+        Number(p2.tokenInfo[p2.tokensToId[tokenAddress]]) -
+        Number(p1.tokenInfo[p1.tokensToId[tokenAddress]]),
+    );
+
+    return sortedPools.splice(0, limit).map(val => {
+      const tokens = [];
+      return {
+        exchange: this.exchangeAddress,
+        address: val.poolAddress,
+        connectorTokens: tokens,
+        liquidityUSD: this.calculateLiquidity(val),
+      };
+    });
+  }
+
+  calculateLiquidity(pool: PoolState): number {
+    let sum = 0;
+    for (let tokenId = 0; tokenId < pool.tokenInfo.length; tokenId++) {
+      sum += Number(
+        pool.tokenInfo[tokenId].tokenBalance / pool.TOKENS_MUL[tokenId],
+      );
+    }
+    return sum;
   }
 }

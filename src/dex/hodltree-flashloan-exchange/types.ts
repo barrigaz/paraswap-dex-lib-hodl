@@ -10,7 +10,7 @@ export type PoolState = {
   // subsrciber. This should be the minimum
   // set of parameters required to compute
   // pool prices. Complete me!
-  poolAddress: string;
+  poolAddress: Address;
   tokensToId: {
     [address: Address]: number;
   };
@@ -25,7 +25,7 @@ export type HodltreeFlashloanExchangeData = {
   // returned by the API that can be used for
   // tx building. The data structure should be minimal.
   // Complete me!
-  poolToUse: Address;
+  poolAddress: Address;
 };
 
 export type DexParams = {
