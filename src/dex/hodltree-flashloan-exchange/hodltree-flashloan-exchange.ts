@@ -214,7 +214,7 @@ export class HodltreeFlashloanExchangeEventPool extends StatefulEventSubscriber<
 
 export class HodltreeFlashloanExchange
   extends SimpleExchange
-  implements IDex<HodltreeFlashloanExchangeData>
+  implements IDex<HodltreeFlashloanExchangeData, null>
 {
   protected eventPools: HodltreeFlashloanExchangeEventPool;
 
@@ -415,12 +415,20 @@ export class HodltreeFlashloanExchange
     );
 
     return sortedPools.splice(0, limit).map(val => {
-      const tokens = [];
       return {
         exchange: this.exchangeAddress,
         address: val.poolAddress,
-        connectorTokens: tokens,
+        connectorTokens: this.getPoolTokens(val),
         liquidityUSD: this.calculateLiquidity(val),
+      };
+    });
+  }
+
+  getPoolTokens(pool: PoolState): Token[] {
+    return pool.tokenInfo.map((val, index) => {
+      return {
+        address: val.address,
+        decimals: 18 - Math.log10(Number(pool.TOKENS_MUL[index])),
       };
     });
   }
