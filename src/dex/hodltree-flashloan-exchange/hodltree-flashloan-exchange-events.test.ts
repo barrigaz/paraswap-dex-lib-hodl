@@ -55,9 +55,7 @@ async function fetchPoolState(
 }
 
 describe('HodltreeFlashloanExchange Event', function () {
-  const blockNumbers: { [eventName: string]: number[] } = {
-    // TODO: complete me!
-  };
+  const blockNumbers: { [eventName: string]: number[] } = {};
 
   describe('HodltreeFlashloanExchangeEventPool', function () {
     Object.keys(blockNumbers).forEach((event: string) => {
@@ -70,10 +68,14 @@ describe('HodltreeFlashloanExchange Event', function () {
             new HodltreeFlashloanExchangeEventPool(
               dexKey,
               network,
-              config.vaultAddress,
-              config.subgraphURL,
               dexHelper,
               logger,
+              HodltreeFlashloanExchangeConfig.HodltreeFlashloanExchange[
+                network
+              ].exchange,
+              HodltreeFlashloanExchangeConfig.HodltreeFlashloanExchange[
+                network
+              ].pools,
             );
 
           await testEventSubscriber(

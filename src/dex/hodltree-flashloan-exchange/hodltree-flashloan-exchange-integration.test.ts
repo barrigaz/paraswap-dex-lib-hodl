@@ -6,6 +6,7 @@ import { Network, SwapSide } from '../../constants';
 import { HodltreeFlashloanExchange } from './hodltree-flashloan-exchange';
 import { checkPoolPrices, checkPoolsLiquidity } from '../../../tests/utils';
 import { Tokens } from '../../../tests/constants-e2e';
+import { HodltreeFlashloanExchangeConfig } from './config';
 
 /*
   README
@@ -22,18 +23,14 @@ import { Tokens } from '../../../tests/constants-e2e';
   (This comment should be removed from the final implementation)
 */
 
-const network = Network.MAINNET;
-const TokenASymbol = 'TokenASymbol';
+const network = Network.ROPSTEN;
+const TokenASymbol = 'USDC';
 const TokenA = Tokens[network][TokenASymbol];
 
-const TokenBSymbol = 'TokenBSymbol';
+const TokenBSymbol = 'USDT';
 const TokenB = Tokens[network][TokenBSymbol];
 
-const amounts = [
-  BigInt('0'),
-  BigInt('1000000000000000000'),
-  BigInt('2000000000000000000'),
-];
+const amounts = [BigInt('0'), BigInt('100000000'), BigInt('200000000')];
 
 const dexKey = 'HodltreeFlashloanExchange';
 
@@ -45,6 +42,10 @@ describe('HodltreeFlashloanExchange', function () {
       network,
       dexKey,
       dexHelper,
+      HodltreeFlashloanExchangeConfig.HodltreeFlashloanExchange[
+        network
+      ].exchange,
+      HodltreeFlashloanExchangeConfig.HodltreeFlashloanExchange[network].pools,
     );
 
     await hodltreeFlashloanExchange.setupEventPools(blocknumber);
@@ -83,6 +84,10 @@ describe('HodltreeFlashloanExchange', function () {
       network,
       dexKey,
       dexHelper,
+      HodltreeFlashloanExchangeConfig.HodltreeFlashloanExchange[
+        network
+      ].exchange,
+      HodltreeFlashloanExchangeConfig.HodltreeFlashloanExchange[network].pools,
     );
 
     await hodltreeFlashloanExchange.setupEventPools(blocknumber);
@@ -120,6 +125,10 @@ describe('HodltreeFlashloanExchange', function () {
       network,
       dexKey,
       dexHelper,
+      HodltreeFlashloanExchangeConfig.HodltreeFlashloanExchange[
+        network
+      ].exchange,
+      HodltreeFlashloanExchangeConfig.HodltreeFlashloanExchange[network].pools,
     );
 
     const poolLiquidity = await hodltreeFlashloanExchange.getTopPoolsForToken(

@@ -58,7 +58,7 @@ describe('HodltreeFlashloanExchange E2E', () => {
   const dexKey = 'HodltreeFlashloanExchange';
 
   describe('HodltreeFlashloanExchange MAINNET', () => {
-    const network = Network.MAINNET;
+    const network = Network.ROPSTEN;
     const tokens = Tokens[network];
     const holders = Holders[network];
     const provider = new JsonRpcProvider(ProviderURL[network]);
@@ -68,8 +68,8 @@ describe('HodltreeFlashloanExchange E2E', () => {
     const tokenBSymbol: string = 'tokenBSymbol';
     const nativeTokenSymbol = NativeTokenSymbols[network];
 
-    const tokenAAmount: string = 'tokenAAmount';
-    const tokenBAmount: string = 'tokenBAmount';
+    const tokenAAmount: string = '100000000000';
+    const tokenBAmount: string = '100000000000';
     const nativeTokenAmount = '1000000000000000000';
 
     // TODO: Add any direct swap contractMethod name if it exists
@@ -90,11 +90,11 @@ describe('HodltreeFlashloanExchange E2E', () => {
     sideToContractMethods.forEach((contractMethods, side) =>
       contractMethods.forEach((contractMethod: ContractMethod) => {
         describe(`${contractMethod}`, () => {
-          it(nativeTokenSymbol + ' -> TOKEN', async () => {
+          it('FRAX' + ' -> USDT', async () => {
             await testE2E(
-              tokens[nativeTokenSymbol],
-              tokens[tokenASymbol],
-              holders[nativeTokenSymbol],
+              tokens['FRAX'],
+              tokens['USDT'],
+              holders['FRAX'],
               side === SwapSide.SELL ? nativeTokenAmount : tokenAAmount,
               side,
               dexKey,
@@ -103,11 +103,11 @@ describe('HodltreeFlashloanExchange E2E', () => {
               provider,
             );
           });
-          it('TOKEN -> ' + nativeTokenSymbol, async () => {
+          it('USDT -> ' + 'USDC', async () => {
             await testE2E(
-              tokens[tokenASymbol],
-              tokens[nativeTokenSymbol],
-              holders[tokenASymbol],
+              tokens['USDT'],
+              tokens['USDC'],
+              holders['USDT'],
               side === SwapSide.SELL ? tokenAAmount : nativeTokenAmount,
               side,
               dexKey,
@@ -118,9 +118,9 @@ describe('HodltreeFlashloanExchange E2E', () => {
           });
           it('TOKEN -> TOKEN', async () => {
             await testE2E(
-              tokens[tokenASymbol],
-              tokens[tokenBSymbol],
-              holders[tokenASymbol],
+              tokens['USDT'],
+              tokens['FRAX'],
+              holders['USDT'],
               side === SwapSide.SELL ? tokenAAmount : tokenBAmount,
               side,
               dexKey,
@@ -132,7 +132,5 @@ describe('HodltreeFlashloanExchange E2E', () => {
         });
       }),
     );
-
-    // TODO: Add any aditional test cases required to test HodltreeFlashloanExchange
   });
 });

@@ -184,7 +184,7 @@ export class HodltreeFlashloanExchangeEventPool extends StatefulEventSubscriber<
     for (let poolId = 0; poolId < this.addressesSubscribed.length; poolId++) {
       const tokens = resultData[poolId * requests + tOffset];
       const balances = resultData[poolId * requests + bOffset];
-      const tokenMuls = resultData[poolId];
+      const tokenMuls = resultData[poolId * requests + tmOffset];
 
       const pool: PoolState = {
         poolAddress: this.addressesSubscribed[poolId],
@@ -280,6 +280,16 @@ export class HodltreeFlashloanExchange
     );
   }
 
+  async setupEventPools(blockNumber: number) {
+    const poolState = await this.eventPools.generateState(blockNumber);
+    this.eventPools.setState(poolState, blockNumber);
+    this.dexHelper.blockManager.subscribeToLogs(
+      this.eventPools,
+      this.eventPools.addressesSubscribed,
+      blockNumber,
+    );
+  }
+
   // Returns pool prices for amounts.
   // If limitPools is defined only pools in limitPools
   // should be used. If limitPools is undefined then
@@ -292,7 +302,6 @@ export class HodltreeFlashloanExchange
     blockNumber: number,
     limitPools?: string[],
   ): Promise<null | ExchangePrices<HodltreeFlashloanExchangeData>> {
-    if (side === SwapSide.BUY) return null;
     const poolsForTokens = this.getPools(srcToken, destToken);
     const allowedPools = limitPools
       ? poolsForTokens.filter(({ poolAddress }) =>
@@ -301,21 +310,60 @@ export class HodltreeFlashloanExchange
       : poolsForTokens;
     if (!allowedPools.length) return null;
     let tokenOut = destToken.address.toLowerCase();
-    const poolPrices = poolsForTokens.map((pool: PoolState) => {
-      const prices = amounts.map((value: bigint) => {
-        return this.getTokenPrice(pool.tokensToId[tokenOut], value, pool);
+    let poolPrices = [];
+    if (side === SwapSide.BUY) {
+      poolPrices = poolsForTokens.map((pool: PoolState) => {
+        const prices = amounts.map((value: bigint) => {
+          return this.getTokenPrice(
+            pool.tokensToId[tokenOut],
+            value,
+            pool,
+            side,
+          );
+        });
+        return {
+          prices,
+          unit: this.getTokenPrice(
+            pool.tokensToId[tokenOut],
+            BigInt(1),
+            pool,
+            side,
+          ),
+          data: {
+            poolAddress: pool.poolAddress,
+          },
+          poolIdentifier: `${this.dexKey}_${pool.poolAddress}`,
+          exchange: this.dexKey,
+          gasCost: 200 * 1000,
+        };
       });
-      return {
-        prices,
-        unit: this.getTokenPrice(pool.tokensToId[tokenOut], BigInt(1), pool),
-        data: {
-          poolAddress: pool.poolAddress,
-        },
-        poolIdentifier: `${this.dexKey}_${pool.poolAddress}`,
-        exchange: this.dexKey,
-        gasCost: 200 * 1000,
-      };
-    });
+    } else {
+      poolPrices = poolsForTokens.map((pool: PoolState) => {
+        const prices = amounts.map((value: bigint) => {
+          return this.getTokenPrice(
+            pool.tokensToId[tokenOut],
+            value,
+            pool,
+            side,
+          );
+        });
+        return {
+          prices,
+          unit: this.getTokenPrice(
+            pool.tokensToId[tokenOut],
+            BigInt(1),
+            pool,
+            side,
+          ),
+          data: {
+            poolAddress: pool.poolAddress,
+          },
+          poolIdentifier: `${this.dexKey}_${pool.poolAddress}`,
+          exchange: this.dexKey,
+          gasCost: 200 * 1000,
+        };
+      });
+    }
     return poolPrices as ExchangePrices<HodltreeFlashloanExchangeData>;
   }
 
@@ -323,8 +371,13 @@ export class HodltreeFlashloanExchange
     destTokenId: number,
     amountIn: bigint,
     pool: PoolState,
+    side: SwapSide,
   ): bigint {
-    let price = (pool.borrowFee + pool.PCT_PRECISION) / pool.PCT_PRECISION;
+    let price: bigint;
+    if (side == SwapSide.SELL)
+      price = pool.PCT_PRECISION / (pool.borrowFee + pool.PCT_PRECISION);
+    else price = (pool.borrowFee + pool.PCT_PRECISION) / pool.PCT_PRECISION;
+
     let amountOut = amountIn * price;
     return pool.tokenInfo[destTokenId].tokenBalance >= amountOut ? price : null;
   }

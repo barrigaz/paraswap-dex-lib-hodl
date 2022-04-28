@@ -189,6 +189,18 @@ export const Tokens: { [network: number]: { [symbol: string]: Token } } = {
       address: '0xaD6D458402F60fD3Bd25163575031ACDce07538D',
       decimals: 18,
     },
+    FRAX: {
+      address: '0x0A729fd2c64c72682C8b8D3598B22DA87992A2d3',
+      decimals: 18,
+    },
+    USDC: {
+      address: '0x01963E50950774F8039027E294EEc01EFbc38A2a',
+      decimals: 6,
+    },
+    USDT: {
+      address: '0xD38e1D2F5bdDF797D9485f74Bf3cBfde30453149',
+      decimals: 6,
+    },
     WETH: {
       address: '0xc778417E063141139Fce010982780140Aa0cD5Ab',
       decimals: 18,
@@ -445,6 +457,9 @@ export const Holders: {
   [Network.ROPSTEN]: {
     ETH: '0x43262A12d8610AA70C15DbaeAC321d51613c9071',
     DAI: '0xbe13517a2b520b2449068D2ec45280992B04047B',
+    FRAX: '0x67F6e2A7139979AF993aC0E4745b67d91c308317',
+    USDC: '0x67F6e2A7139979AF993aC0E4745b67d91c308317',
+    USDT: '0x67F6e2A7139979AF993aC0E4745b67d91c308317',
     WETH: '0xdA87Da8C599E8A8993f3CBCD0aA5A1316A559A6D',
   },
   [Network.POLYGON]: {
