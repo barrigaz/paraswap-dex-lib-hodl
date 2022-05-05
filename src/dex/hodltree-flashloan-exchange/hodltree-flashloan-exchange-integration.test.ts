@@ -30,7 +30,8 @@ const TokenA = Tokens[network][TokenASymbol];
 const TokenBSymbol = 'USDT';
 const TokenB = Tokens[network][TokenBSymbol];
 
-const amounts = [BigInt('0'), BigInt('100000000'), BigInt('200000000')];
+const sellAmounts = [BigInt('0'), BigInt('100000000'), BigInt('150000000')];
+const buyAmounts = [BigInt('0'), BigInt('100000000'), BigInt('200000001')];
 
 const dexKey = 'HodltreeFlashloanExchange';
 
@@ -66,7 +67,7 @@ describe('HodltreeFlashloanExchange', function () {
     const poolPrices = await hodltreeFlashloanExchange.getPricesVolume(
       TokenA,
       TokenB,
-      amounts,
+      sellAmounts,
       SwapSide.SELL,
       blocknumber,
       pools,
@@ -74,7 +75,7 @@ describe('HodltreeFlashloanExchange', function () {
     console.log('${TokenASymbol} <> ${TokenBSymbol} Pool Prices: ', poolPrices);
 
     expect(poolPrices).not.toBeNull();
-    checkPoolPrices(poolPrices!, amounts, SwapSide.SELL, dexKey);
+    checkPoolPrices(poolPrices!, sellAmounts, SwapSide.SELL, dexKey);
   });
 
   it('getPoolIdentifiers and getPricesVolume BUY', async function () {
@@ -108,7 +109,7 @@ describe('HodltreeFlashloanExchange', function () {
     const poolPrices = await hodltreeFlashloanExchange.getPricesVolume(
       TokenA,
       TokenB,
-      amounts,
+      buyAmounts,
       SwapSide.BUY,
       blocknumber,
       pools,
@@ -116,11 +117,12 @@ describe('HodltreeFlashloanExchange', function () {
     console.log('${TokenASymbol} <> ${TokenBSymbol} Pool Prices: ', poolPrices);
 
     expect(poolPrices).not.toBeNull();
-    checkPoolPrices(poolPrices!, amounts, SwapSide.BUY, dexKey);
+    checkPoolPrices(poolPrices!, buyAmounts, SwapSide.BUY, dexKey);
   });
 
   it('getTopPoolsForToken', async function () {
     const dexHelper = new DummyDexHelper(network);
+    const blocknumber = await dexHelper.provider.getBlockNumber();
     const hodltreeFlashloanExchange = new HodltreeFlashloanExchange(
       network,
       dexKey,
@@ -130,6 +132,8 @@ describe('HodltreeFlashloanExchange', function () {
       ].exchange,
       HodltreeFlashloanExchangeConfig.HodltreeFlashloanExchange[network].pools,
     );
+
+    await hodltreeFlashloanExchange.setupEventPools(blocknumber);
 
     const poolLiquidity = await hodltreeFlashloanExchange.getTopPoolsForToken(
       TokenA.address,

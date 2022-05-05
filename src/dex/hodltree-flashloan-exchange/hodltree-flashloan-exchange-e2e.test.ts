@@ -2,11 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { testE2E } from '../../../tests/utils-e2e';
-import {
-  Tokens,
-  Holders,
-  NativeTokenSymbols,
-} from '../../../tests/constants-e2e';
+import { Tokens, Holders } from '../../../tests/constants-e2e';
 import {
   Network,
   ProviderURL,
@@ -63,24 +59,13 @@ describe('HodltreeFlashloanExchange E2E', () => {
     const holders = Holders[network];
     const provider = new JsonRpcProvider(ProviderURL[network]);
 
-    const tokenASymbol: string = 'tokenASymbol';
-    const tokenBSymbol: string = 'tokenBSymbol';
-    const nativeTokenSymbol = NativeTokenSymbols[network];
-
     const tokenAAmount: string = '100000000000';
     const tokenBAmount: string = '100000000000';
     const nativeTokenAmount = '1000000000000000000';
 
     const sideToContractMethods = new Map([
-      [
-        SwapSide.SELL,
-        [
-          ContractMethod.simpleSwap,
-          ContractMethod.multiSwap,
-          ContractMethod.megaSwap,
-        ],
-      ],
-      [SwapSide.BUY, [ContractMethod.simpleBuy, ContractMethod.buy]],
+      [SwapSide.SELL, [ContractMethod.simpleSwap]],
+      [SwapSide.BUY, [ContractMethod.simpleBuy]],
     ]);
 
     sideToContractMethods.forEach((contractMethods, side) =>

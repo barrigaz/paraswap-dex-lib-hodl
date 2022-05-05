@@ -42,7 +42,7 @@ import { PoolStateMap } from './types';
   (This comment should be removed from the final implementation)
 */
 
-// jest.setTimeout(50 * 1000);
+jest.setTimeout(50 * 1000);
 const dexKey = 'HodltreeFlashloanExchange';
 const network = Network.ROPSTEN;
 const config = HodltreeFlashloanExchangeConfig[dexKey][network];
