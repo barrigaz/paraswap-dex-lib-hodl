@@ -7,9 +7,7 @@ export type TokenInfo = {
 
 export type PoolState = {
   poolAddress: Address;
-  tokensToId: {
-    [address: Address]: number;
-  };
+  tokensToId: Record<Address, number>;
   tokenInfo: TokenInfo[];
   borrowFee: bigint;
   PCT_PRECISION: bigint;
@@ -28,4 +26,4 @@ export type DexParams = {
   exchange: Address;
 };
 
-export type PoolStateMap = { [address: string]: PoolState };
+export type PoolStateMap = Record<string, PoolState>;

@@ -7,6 +7,7 @@ import { Network } from '../../constants';
 import { DummyDexHelper } from '../../dex-helper/index';
 import { testEventSubscriber } from '../../../tests/utils-events';
 import axios from 'axios';
+import { PoolStateMap } from './types';
 
 /*
   README
@@ -41,21 +42,25 @@ import axios from 'axios';
   (This comment should be removed from the final implementation)
 */
 
-jest.setTimeout(50 * 1000);
+// jest.setTimeout(50 * 1000);
 const dexKey = 'HodltreeFlashloanExchange';
-const network = Network.MAINNET;
+const network = Network.ROPSTEN;
 const config = HodltreeFlashloanExchangeConfig[dexKey][network];
 
 async function fetchPoolState(
   hodltreeFlashloanExchangePools: HodltreeFlashloanExchangeEventPool,
   blockNumber: number,
   poolAddress: string,
-): Promise<PoolStateType> {
-  // TODO: complete me!
+): Promise<PoolStateMap> {
+  return await hodltreeFlashloanExchangePools.generateState(blockNumber);
 }
 
 describe('HodltreeFlashloanExchange Event', function () {
-  const blockNumbers: { [eventName: string]: number[] } = {};
+  const blockNumbers: { [eventName: string]: [number, string][] } = {
+    Borrow: [[12240009, '0x54fd1093bB4c64a5A80bb4E6c61E108C0eb994f2']],
+    Supply: [[12240006, '0x54fd1093bB4c64a5A80bb4E6c61E108C0eb994f2']],
+    Withdraw: [[12240015, '0x54fd1093bB4c64a5A80bb4E6c61E108C0eb994f2']],
+  };
 
   describe('HodltreeFlashloanExchangeEventPool', function () {
     Object.keys(blockNumbers).forEach((event: string) => {

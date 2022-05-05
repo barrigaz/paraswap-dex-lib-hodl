@@ -63,7 +63,6 @@ describe('HodltreeFlashloanExchange E2E', () => {
     const holders = Holders[network];
     const provider = new JsonRpcProvider(ProviderURL[network]);
 
-    // TODO: Modify the tokenASymbol, tokenBSymbol, tokenAAmount;
     const tokenASymbol: string = 'tokenASymbol';
     const tokenBSymbol: string = 'tokenBSymbol';
     const nativeTokenSymbol = NativeTokenSymbols[network];
@@ -71,9 +70,6 @@ describe('HodltreeFlashloanExchange E2E', () => {
     const tokenAAmount: string = '100000000000';
     const tokenBAmount: string = '100000000000';
     const nativeTokenAmount = '1000000000000000000';
-
-    // TODO: Add any direct swap contractMethod name if it exists
-    // TODO: If buy is not supported remove the buy contract methods
 
     const sideToContractMethods = new Map([
       [
