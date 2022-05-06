@@ -35,6 +35,7 @@ import { IDexHelper } from '../dex-helper/idex-helper';
 import { SwapSide, Network } from '../constants';
 import { Adapters } from '../types';
 import { Lido } from './lido';
+import { HodltreeFlashloanExchange } from './hodltree-flashloan-exchange/hodltree-flashloan-exchange';
 
 const LegacyDexes = [
   Curve,
@@ -63,7 +64,14 @@ const LegacyDexes = [
   Lido,
 ];
 
-const Dexes = [BalancerV2, UniswapV2, BiSwap, MDEX, Dfyn];
+const Dexes = [
+  BalancerV2,
+  UniswapV2,
+  BiSwap,
+  MDEX,
+  Dfyn,
+  HodltreeFlashloanExchange,
+];
 
 const AdapterNameAddressMap: {
   [network: number]: { [name: string]: Address };

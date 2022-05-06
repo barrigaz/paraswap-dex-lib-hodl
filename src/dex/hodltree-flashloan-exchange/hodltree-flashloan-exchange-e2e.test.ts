@@ -59,9 +59,9 @@ describe('HodltreeFlashloanExchange E2E', () => {
     const holders = Holders[network];
     const provider = new JsonRpcProvider(ProviderURL[network]);
 
-    const tokenAAmount: string = '100000000000';
-    const tokenBAmount: string = '100000000000';
-    const nativeTokenAmount = '1000000000000000000';
+    const tokenAAmount: string = (100 * 1e18).toString();
+    const tokenBAmount: string = (100 * 1e6).toString();
+    const tokenCAmount: string = (100 * 1e6).toString();
 
     const sideToContractMethods = new Map([
       [SwapSide.SELL, [ContractMethod.simpleSwap]],
@@ -76,7 +76,7 @@ describe('HodltreeFlashloanExchange E2E', () => {
               tokens['FRAX'],
               tokens['USDT'],
               holders['FRAX'],
-              side === SwapSide.SELL ? nativeTokenAmount : tokenAAmount,
+              side == SwapSide.SELL ? tokenAAmount : tokenBAmount,
               side,
               dexKey,
               contractMethod,
@@ -89,7 +89,7 @@ describe('HodltreeFlashloanExchange E2E', () => {
               tokens['USDT'],
               tokens['USDC'],
               holders['USDT'],
-              side === SwapSide.SELL ? tokenAAmount : nativeTokenAmount,
+              side == SwapSide.SELL ? tokenBAmount : tokenCAmount,
               side,
               dexKey,
               contractMethod,
@@ -102,7 +102,7 @@ describe('HodltreeFlashloanExchange E2E', () => {
               tokens['USDT'],
               tokens['FRAX'],
               holders['USDT'],
-              side === SwapSide.SELL ? tokenAAmount : tokenBAmount,
+              side === SwapSide.SELL ? tokenCAmount : tokenAAmount,
               side,
               dexKey,
               contractMethod,

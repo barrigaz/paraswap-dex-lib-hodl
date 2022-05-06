@@ -322,8 +322,12 @@ export class HodltreeFlashloanExchange
     protected network: Network,
     protected dexKey: string,
     protected dexHelper: IDexHelper,
-    protected exchangeAddress: Address,
-    protected poolAddresses: Address[],
+    protected exchangeAddress: Address = HodltreeFlashloanExchangeConfig[
+      dexKey
+    ][network].exchange,
+    protected poolAddresses: Address[] = HodltreeFlashloanExchangeConfig[
+      dexKey
+    ][network].pools,
   ) {
     super(dexHelper.augustusAddress, dexHelper.provider);
     this.logger = dexHelper.getLogger(dexKey);
@@ -478,22 +482,29 @@ export class HodltreeFlashloanExchange
     let price: bigint = BigInt(0);
     amountIn = BigInt(amountIn);
     if (side == SwapSide.SELL) {
-      price =
+      price = this.toTokenDecimals(
         (amountIn * pool.TOKENS_MUL[srcTokenId] * pool.PCT_PRECISION) /
-        (pool.borrowFee + pool.PCT_PRECISION) /
-        pool.TOKENS_MUL[destTokenId];
+          (pool.borrowFee + pool.PCT_PRECISION),
+        pool.TOKENS_MUL[destTokenId],
+      );
       return pool.tokenInfo[destTokenId].tokenBalance >= price ? price : null;
     } else {
-      price =
+      price = this.toTokenDecimals(
         (amountIn *
-          pool.TOKENS_MUL[srcTokenId] *
+          pool.TOKENS_MUL[destTokenId] *
           (pool.borrowFee + pool.PCT_PRECISION)) /
-        pool.PCT_PRECISION /
-        pool.TOKENS_MUL[destTokenId];
+          pool.PCT_PRECISION,
+        pool.TOKENS_MUL[srcTokenId],
+      );
       return pool.tokenInfo[destTokenId].tokenBalance >= amountIn
         ? price
         : null;
     }
+  }
+
+  toTokenDecimals(amount: bigint, tokenMultiplier: bigint): bigint {
+    let tokenDecimals: number = 18 - Math.log10(Number(tokenMultiplier));
+    return amount / BigInt(Math.pow(10, 18 - tokenDecimals));
   }
 
   // Encode params required by the exchange adapter
@@ -545,14 +556,7 @@ export class HodltreeFlashloanExchange
   ): Promise<SimpleExchangeParam> {
     const swapData = this.eventPools.exchangeInterface.encodeFunctionData(
       'swap',
-      [
-        {
-          liquidityPool_: data.poolAddress,
-          tokenIn_: srcToken,
-          tokenOut_: destToken,
-          inAmount_: srcAmount,
-        },
-      ],
+      [data.poolAddress, srcToken, destToken, srcAmount],
     );
 
     return this.buildSimpleParamWithoutWETHConversion(
